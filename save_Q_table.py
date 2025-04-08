@@ -17,7 +17,8 @@ def epsilon_greedy(env, state, Q, epsilon, episodes, episode):
     if np.random.uniform(0, 1) > epsilon:
         return np.argmax(Q[state])
     else:
-        return env.action_space.sample()
+        explore_probs = np.array([0.01, 0.01, 0.01, 0.02, 0.02, 0.02, 0.2, 0.51, 0.2])
+        return np.random.choice(np.arange(env.action_space.n), p=explore_probs)
 
 def simulate(env, Q, max_episode_length, epsilon, episodes, episode, bins):
     D = []
@@ -49,8 +50,8 @@ def q_learning(env, gamma, episodes, max_episode_length, epsilon, step_size, bin
             total_reward += reward
             total_count += 1
             
-        # # Decay epsilon
-        # epsilon = max(0.1, epsilon * 0.995)
+        # Decay epsilon
+        epsilon = max(0.1, epsilon * 0.995)
 
         # Print average reward every 10 episodes
         if episode % 10 == 0:
@@ -67,9 +68,9 @@ env = env.unwrapped
 gamma = 0.9
 episodes = 1000
 max_episode_length = 200
-epsilon = 0.8
+epsilon = 0.9
 step_size = 0.01
-bins = 1000  # for discretization
+bins = 10  # for discretization
 
 # Train
 Q = q_learning(env, gamma, episodes, max_episode_length, epsilon, step_size, bins)

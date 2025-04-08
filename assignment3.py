@@ -9,7 +9,7 @@ import pickle
 import torch
 import random
 
-def discretize(state, bins=1000):
+def discretize(state, bins=10):
     return tuple((np.array(state) * bins).astype(int))
 
 def default_q():
