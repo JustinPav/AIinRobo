@@ -1,47 +1,45 @@
 import gym
 import simple_driving
-# import pybullet_envs
-import pybullet as p
 import numpy as np
-import math
-from collections import defaultdict
-import pickle
 import torch
-import random
+import torch.nn as nn
 
-def discretize(state, bins=10):
-    return tuple((np.array(state) * bins).astype(int))
+# Define the same network structure used during training
+class Network(nn.Module):
+    def __init__(self, input_dim, n_actions):
+        super(Network, self).__init__()
+        self.fc1 = nn.Linear(input_dim, 256)
+        self.fc2 = nn.Linear(256, 256)
+        self.out = nn.Linear(256, n_actions)
 
-def default_q():
-    return np.zeros(env.action_space.n)
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        return self.out(x)
 
-# Load Q-table
-with open("q_table.pkl", "rb") as f:
-    Q = pickle.load(f)
-
-######################### renders image from third person perspective for validating policy ##############################
-# env = gym.make("SimpleDriving-v0", apply_api_compatibility=True, renders=False, isDiscrete=True, render_mode='tp_camera')
-##########################################################################################################################
-
-######################### renders image from onboard camera ###############################################################
-# env = gym.make("SimpleDriving-v0", apply_api_compatibility=True, renders=False, isDiscrete=True, render_mode='fp_camera')
-##########################################################################################################################
-
-######################### if running locally you can just render the environment in pybullet's GUI #######################
+# Create environment
 env = gym.make("SimpleDriving-v0", apply_api_compatibility=True, renders=True, isDiscrete=True)
 env = env.unwrapped
-##########################################################################################################################
 
+# Load trained model
+state_dim = env.observation_space.shape[0]
+n_actions = env.action_space.n
+
+model = Network(state_dim, n_actions)
+model.load_state_dict(torch.load("dqn_model.pth"))  # Make sure you saved your model like this: torch.save(model.state_dict(), "dqn_model.pth")
+model.eval()
+
+# Run the agent in the environment
 state, info = env.reset()
-state = discretize(state)
-# frames = []
-# frames.append(env.render())
 
 for i in range(200):
-    action = np.argmax(Q[state])
+    state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
+    with torch.no_grad():
+        q_values = model(state_tensor)
+    action = torch.argmax(q_values).item()
+
     next_state, reward, terminated, truncated, info = env.step(action)
-    state = discretize(next_state)
-    # frames.append(env.render())  # if running locally not necessary unless you want to grab onboard camera image
+    state = next_state
+
     if terminated or truncated:
         break
-
