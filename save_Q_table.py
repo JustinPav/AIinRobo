@@ -22,7 +22,7 @@ EPS_START = 1.0
 EPS_END = 0.01
 EPS_DECAY = 5000
 NETWORK_UPDATE_ITERS = 1000
-EPISODES = 1000
+EPISODES = 10000
 
 class Network(nn.Module):
     def __init__(self, env):
@@ -158,6 +158,9 @@ for episode in range(EPISODES):
     if episode % 10 == 0:
         print(f"Episode {episode}, Reward: {total_reward}")
 
+
+torch.save(agent.policy_network.state_dict(), "dqn_model.pth")
+
 # Plot training performance
 plt.plot(episode_rewards)
 plt.xlabel("Episode")
@@ -165,5 +168,4 @@ plt.ylabel("Reward")
 plt.title("DQN Training Performance")
 plt.show()
 
-torch.save(agent.policy_network.state_dict(), "dqn_model.pth")
 
