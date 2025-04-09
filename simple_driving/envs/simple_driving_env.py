@@ -23,9 +23,12 @@ class SimpleDrivingEnv(gym.Env):
             self.action_space = gym.spaces.box.Box(
                 low=np.array([-1, -.6], dtype=np.float32),
                 high=np.array([1, .6], dtype=np.float32))
+            
+        # Observation space: [goal_x, goal_y, obs_x, obs_y] for task 4
         self.observation_space = gym.spaces.box.Box(
-            low=np.array([-40, -40], dtype=np.float32),
-            high=np.array([40, 40], dtype=np.float32))
+            low=np.array([-40, -40, -40, -40], dtype=np.float32),
+            high=np.array([40, 40, 40, 40], dtype=np.float32))
+
         self.np_random, _ = gym.utils.seeding.np_random()
 
         if renders:
@@ -86,14 +89,9 @@ class SimpleDrivingEnv(gym.Env):
             #print("reached goal")
             self.done = True
             self.reached_goal = True
+
+            # Reward for reaching goal Task 3
             reward += 200
-
-
-        dist_to_obj = math.sqrt(((carpos[0] - objpos[0]) ** 2 +
-                                  (carpos[1] - objpos[1]) ** 2))
-        if dist_to_obj < 1.5:
-            #print("hit obstacle")
-            reward -= 200
 
         ob = car_ob
         return ob, reward, self.done, dict()
@@ -123,7 +121,7 @@ class SimpleDrivingEnv(gym.Env):
         # Visual element of the goal
         self.goal_object = Goal(self._p, self.goal)
 
-        # --- Add obstacle ---
+        # --- Add obstacle (Task 4) ---
         # Position the obstacle somewhere between (0,0) and the goal, with a small random offset
         t = self.np_random.uniform(0.1, 1.0)  # location along the line to goal
         noise_x = self.np_random.uniform(-1.0, 1.0)
@@ -201,10 +199,15 @@ class SimpleDrivingEnv(gym.Env):
         # self._observation = []  #self._racecar.getObservation()
         carpos, carorn = self._p.getBasePositionAndOrientation(self.car.car)
         goalpos, goalorn = self._p.getBasePositionAndOrientation(self.goal_object.goal)
-        invCarPos, invCarOrn = self._p.invertTransform(carpos, carorn)
-        goalPosInCar, goalOrnInCar = self._p.multiplyTransforms(invCarPos, invCarOrn, goalpos, goalorn)
+        obspos, obsorn = self._p.getBasePositionAndOrientation(self.obstacle_object.obstacle)
 
-        observation = [goalPosInCar[0], goalPosInCar[1]]
+        invCarPos, invCarOrn = self._p.invertTransform(carpos, carorn)
+    
+        goalPosInCar, _ = self._p.multiplyTransforms(invCarPos, invCarOrn, goalpos, goalorn)
+        obsPosInCar, _ = self._p.multiplyTransforms(invCarPos, invCarOrn, obspos, obsorn)
+
+        # Added obstacle position in car frame for task 4
+        observation = [goalPosInCar[0], goalPosInCar[1], obsPosInCar[0], obsPosInCar[1]]
         return observation
 
     def _termination(self):

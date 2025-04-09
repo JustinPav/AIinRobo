@@ -94,6 +94,7 @@ class DQN_Solver:
         else:
             eps_threshold = 1.0
 
+        # Epsilon-greedy action selection with a custom distribution for Task 2
         if random.random() < eps_threshold:
             action_distribution = [0.1, 0.2, 0.1, 0.09, 0.02, 0.09, 0.1, 0.2, 0.1]
             return np.random.choice(np.arange(9), p=action_distribution)
