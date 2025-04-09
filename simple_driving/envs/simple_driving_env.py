@@ -6,6 +6,7 @@ from pybullet_utils import bullet_client as bc
 from simple_driving.resources.car import Car
 from simple_driving.resources.plane import Plane
 from simple_driving.resources.goal import Goal
+from simple_driving.resources.obstacle import Obstacle
 import matplotlib.pyplot as plt
 import time
 
@@ -63,6 +64,7 @@ class SimpleDrivingEnv(gym.Env):
 
           carpos, carorn = self._p.getBasePositionAndOrientation(self.car.car)
           goalpos, goalorn = self._p.getBasePositionAndOrientation(self.goal_object.goal)
+          objpos, objorn = self._p.getBasePositionAndOrientation(self.obstacle_object.obstacle)
           car_ob = self.getExtendedObservation()
 
           if self._termination():
@@ -85,6 +87,13 @@ class SimpleDrivingEnv(gym.Env):
             self.done = True
             self.reached_goal = True
             reward += 200
+
+
+        dist_to_obj = math.sqrt(((carpos[0] - objpos[0]) ** 2 +
+                                  (carpos[1] - objpos[1]) ** 2))
+        if dist_to_obj < 1.5:
+            #print("hit obstacle")
+            reward -= 200
 
         ob = car_ob
         return ob, reward, self.done, dict()
@@ -113,6 +122,17 @@ class SimpleDrivingEnv(gym.Env):
 
         # Visual element of the goal
         self.goal_object = Goal(self._p, self.goal)
+
+        # --- Add obstacle ---
+        # Position the obstacle somewhere between (0,0) and the goal, with a small random offset
+        t = self.np_random.uniform(0.1, 1.0)  # location along the line to goal
+        noise_x = self.np_random.uniform(-1.0, 1.0)
+        noise_y = self.np_random.uniform(-1.0, 1.0)
+        obs_x = t * self.goal[0] + noise_x
+        obs_y = t * self.goal[1] + noise_y
+        self.obstacle = (obs_x, obs_y)
+
+        self.obstacle_object = Obstacle(self._p, self.obstacle)
 
         # Get observation to return
         carpos = self.car.get_observation()
