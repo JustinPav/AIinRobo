@@ -31,18 +31,18 @@ model = Network(state_dim, n_actions)
 model.load_state_dict(torch.load("dqn_model.pth"))
 model.eval()
 
+for i in range (5):
+    # Run the agent in the environment
+    state, info = env.reset()
 
-# Run the agent in the environment
-state, info = env.reset()
+    for i in range(200):
+        state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
+        with torch.no_grad():
+            q_values = model(state_tensor)
+        action = torch.argmax(q_values).item()
 
-for i in range(200):
-    state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
-    with torch.no_grad():
-        q_values = model(state_tensor)
-    action = torch.argmax(q_values).item()
+        next_state, reward, terminated, truncated, info = env.step(action)
+        state = next_state
 
-    next_state, reward, terminated, truncated, info = env.step(action)
-    state = next_state
-
-    if terminated or truncated:
-        break
+        if terminated or truncated:
+            break

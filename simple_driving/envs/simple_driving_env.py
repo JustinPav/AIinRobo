@@ -123,7 +123,7 @@ class SimpleDrivingEnv(gym.Env):
 
         # --- Add obstacle (Task 4) ---
         # Position the obstacle somewhere between (0,0) and the goal, with a small random offset
-        t = self.np_random.uniform(0.3, 1.0)  # location along the line to goal
+        t = self.np_random.uniform(0.3, 0.8)  # location along the line to goal
         noise_x = self.np_random.uniform(-1.0, 1.0)
         noise_y = self.np_random.uniform(-1.0, 1.0)
         obs_x = t * self.goal[0] + noise_x
